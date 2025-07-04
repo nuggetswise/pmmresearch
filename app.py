@@ -87,13 +87,7 @@ def main():
             st.warning("⚠️ Tavily API Key not configured")
             st.info("Set TAVILY_API_KEY for enhanced web research")
         
-        # Research mode
-        research_mode = st.selectbox(
-            "Research Mode",
-            ["advanced", "basic"],
-            index=0,
-            help="Advanced: 3-stage research pipeline. Basic: Groq-only fallback."
-        )
+        # Research mode removed - now automatically determined by prompt selection
         
         # Prompt selection for A/B testing
         available_prompts = prompt_manager.get_available_prompts()
@@ -156,12 +150,15 @@ def main():
         if research_button and user_query.strip():
             with st.spinner("🧠 Analyzing your question..."):
                 try:
-                    # Choose research method based on mode
-                    if research_mode == "advanced":
+                    # Choose research method based on selected prompt
+                    if selected_prompt == "testprompt3":
                         # Use advanced 3-stage research pipeline
-                        result = asyncio.run(advanced_researcher.conduct_advanced_research(user_query))
+                        result = asyncio.run(advanced_researcher.conduct_advanced_research(user_query, selected_prompt))
+                    elif selected_prompt == "testprompt4":
+                        # Use data-driven research (executive reports)
+                        result = asyncio.run(advanced_researcher.conduct_advanced_research(user_query, selected_prompt))
                     else:
-                        # Use basic research (Groq only) with selected prompt
+                        # Use basic research (Groq/DeepSeek only)
                         result = research_agent.generate_research_report(user_query, selected_prompt)
                     
                     if "error" in result:
@@ -172,9 +169,11 @@ def main():
                         # Display results
                         st.markdown('<div class="result-box">', unsafe_allow_html=True)
                         
-                        # Research mode indicator
-                        if research_mode == "advanced":
+                        # Research method indicator based on prompt
+                        if selected_prompt == "testprompt3":
                             st.markdown('<div class="cache-indicator">🚀 Advanced 3-stage research</div>', unsafe_allow_html=True)
+                        elif selected_prompt == "testprompt4":
+                            st.markdown('<div class="cache-indicator">📊 Data-driven executive report</div>', unsafe_allow_html=True)
                         else:
                             st.markdown('<div class="cache-indicator">📋 Basic research mode</div>', unsafe_allow_html=True)
                         

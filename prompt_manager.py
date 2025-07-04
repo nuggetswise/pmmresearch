@@ -30,6 +30,12 @@ class PromptManager:
                 with open(prompt3_path, 'r', encoding='utf-8') as f:
                     self.prompts["testprompt3"] = f.read().strip()
             
+            # Load testprompt4
+            prompt4_path = os.path.join(self.prompts_dir, "testprompt4")
+            if os.path.exists(prompt4_path):
+                with open(prompt4_path, 'r', encoding='utf-8') as f:
+                    self.prompts["testprompt4"] = f.read().strip()
+            
             # Set testprompt2 as default if available
             if "testprompt2" in self.prompts:
                 self.prompts["default"] = self.prompts["testprompt2"]
@@ -48,93 +54,96 @@ class PromptManager:
     
     def get_system_prompt(self, prompt_name: str, stage: str = None) -> str:
         """Get system prompt for a specific stage (for 3-stage pipeline)"""
-        if prompt_name == "testprompt3" and stage:
-            return self._extract_system_prompt(stage)
+        if stage and self._is_3stage_prompt(prompt_name):
+            return self._extract_system_prompt(prompt_name, stage)
         return self.prompts.get(prompt_name, self.prompts["default"])
     
     def get_user_prompt(self, prompt_name: str, stage: str = None) -> str:
         """Get user prompt for a specific stage (for 3-stage pipeline)"""
-        if prompt_name == "testprompt3" and stage:
-            return self._extract_user_prompt(stage)
+        if stage and self._is_3stage_prompt(prompt_name):
+            return self._extract_user_prompt(prompt_name, stage)
         return self.prompts.get(prompt_name, self.prompts["default"])
     
-    def _extract_system_prompt(self, stage: str) -> str:
-        """Extract system prompt for specific stage from testprompt3"""
-        if "testprompt3" not in self.prompts:
-            return "You are an AI assistant."
+    def _is_3stage_prompt(self, prompt_name: str) -> bool:
+        """Check if a prompt is a 3-stage pipeline prompt"""
+        if prompt_name not in self.prompts:
+            return False
         
-        content = self.prompts["testprompt3"]
-        
-        if stage == "planner":
-            # Extract Stage 1 system prompt
-            start = content.find("# ===== STAGE 1: RESEARCH PLANNER =====\n# SYSTEM PROMPT")
-            if start != -1:
-                start = content.find("\n", start) + 1
-                end = content.find("# USER PROMPT", start)
-                if end != -1:
-                    return content[start:end].strip()
-        
-        elif stage == "execution":
-            # Extract Stage 2 system prompt
-            start = content.find("# ===== STAGE 2: EXECUTION AGENT =====\n# SYSTEM PROMPT")
-            if start != -1:
-                start = content.find("\n", start) + 1
-                end = content.find("# USER PROMPT", start)
-                if end != -1:
-                    return content[start:end].strip()
-        
-        elif stage == "publisher":
-            # Extract Stage 3 system prompt
-            start = content.find("# ===== STAGE 3: RESEARCH PUBLISHER =====\n# SYSTEM PROMPT")
-            if start != -1:
-                start = content.find("\n", start) + 1
-                end = content.find("# USER PROMPT", start)
-                if end != -1:
-                    return content[start:end].strip()
-        
-        return "You are an AI assistant."
+        content = self.prompts[prompt_name]
+        # Check if it contains 3-stage structure markers
+        return ("STAGE 1:" in content and "STAGE 2:" in content and "STAGE 3:" in content)
     
-    def _extract_user_prompt(self, stage: str) -> str:
-        """Extract user prompt for specific stage from testprompt3"""
-        if "testprompt3" not in self.prompts:
+    def _extract_system_prompt(self, prompt_name: str, stage: str) -> str:
+        """Extract system prompt for specific stage from any 3-stage prompt, robust to whitespace."""
+        if prompt_name not in self.prompts:
+            return "You are an AI assistant."
+        content = self.prompts[prompt_name]
+        
+        stage_headers = {
+            "planner": "# ===== STAGE 1: RESEARCH PLANNER =====",
+            "execution": "# ===== STAGE 2: EXECUTION AGENT =====",
+            "publisher": "# ===== STAGE 3: RESEARCH PUBLISHER ====="
+        }
+        header = stage_headers.get(stage)
+        if not header:
+            return "You are an AI assistant."
+        start = content.find(header)
+        if start == -1:
+            return "You are an AI assistant."
+        # Find the next '### System Prompt' after the header
+        sys_marker = content.find("### System Prompt", start)
+        if sys_marker == -1:
+            return "You are an AI assistant."
+        sys_start = content.find("\n", sys_marker) + 1
+        user_marker = content.find("### User Prompt", sys_start)
+        if user_marker == -1:
+            return "You are an AI assistant."
+        return content[sys_start:user_marker].strip()
+    
+    def _extract_user_prompt(self, prompt_name: str, stage: str) -> str:
+        """Extract user prompt for specific stage from any 3-stage prompt, robust to whitespace."""
+        if prompt_name not in self.prompts:
             return ""
-        
-        content = self.prompts["testprompt3"]
-        
-        if stage == "planner":
-            # Extract Stage 1 user prompt
-            start = content.find("# USER PROMPT\nGiven the query:")
-            if start != -1:
-                start = content.find("\n", start) + 1
-                end = content.find("# ===== STAGE 2:", start)
-                if end != -1:
-                    return content[start:end].strip()
-        
-        elif stage == "execution":
-            # Extract Stage 2 user prompt
-            start = content.find("# USER PROMPT\nResearch the question:")
-            if start != -1:
-                start = content.find("\n", start) + 1
-                end = content.find("# ===== STAGE 3:", start)
-                if end != -1:
-                    return content[start:end].strip()
-        
-        elif stage == "publisher":
-            # Extract Stage 3 user prompt
-            start = content.find("# USER PROMPT\nHere are the sub-questions")
-            if start != -1:
-                start = content.find("\n", start) + 1
-                return content[start:].strip()
-        
-        return ""
+        content = self.prompts[prompt_name]
+        stage_headers = {
+            "planner": "# ===== STAGE 1: RESEARCH PLANNER =====",
+            "execution": "# ===== STAGE 2: EXECUTION AGENT =====",
+            "publisher": "# ===== STAGE 3: RESEARCH PUBLISHER ====="
+        }
+        header = stage_headers.get(stage)
+        if not header:
+            return ""
+        start = content.find(header)
+        if start == -1:
+            return ""
+        user_marker = content.find("### User Prompt", start)
+        if user_marker == -1:
+            return ""
+        user_start = content.find("\n", user_marker) + 1
+        # End at next '---' or end of file
+        end = content.find("---", user_start)
+        if end == -1:
+            return content[user_start:].strip()
+        return content[user_start:end].strip()
     
     def get_available_prompts(self) -> Dict[str, str]:
         """Get all available prompts with descriptions"""
-        return {
-            "testprompt1": "Comprehensive PMM research prompt",
-            "testprompt2": "Clean 5-section approach", 
-            "testprompt3": "3-stage research pipeline prompts"
-        }
+        available_prompts = {}
+        
+        # Only include prompts that actually exist
+        if "testprompt1" in self.prompts:
+            available_prompts["testprompt1"] = "Basic research (fast, simple analysis)"
+        
+        if "testprompt2" in self.prompts:
+            available_prompts["testprompt2"] = "Clean 5-section approach"
+        
+        if "testprompt3" in self.prompts:
+            available_prompts["testprompt3"] = "Advanced 3-stage research (deep analysis)"
+        
+        if "testprompt4" in self.prompts:
+            available_prompts["testprompt4"] = "Data-driven reports (web sources + insights)"
+        
+        return available_prompts
     
     def reload_prompts(self):
         """Reload prompts from files (useful for A/B testing)"""

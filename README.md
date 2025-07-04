@@ -2,9 +2,9 @@
 
 A focused, lightning-fast research assistant built for Product Marketing Managers (PMMs) and GTM leaders.
 
-Ask any strategic question — get a structured, multi-part answer synthesized by a Groq-powered LLM in seconds.
+Ask any strategic question — get a structured, multi-part answer synthesized by a DeepSeek-powered LLM in seconds.
 
-Powered by Groq's `compound-beta` model and enhanced with cost-saving caching and clean markdown outputs.
+Powered by DeepSeek's `deepseek-reasoner` model (with Groq fallback) and enhanced with cost-saving caching and clean markdown outputs.
 
 ---
 
@@ -21,6 +21,7 @@ Powered by Groq's `compound-beta` model and enhanced with cost-saving caching an
   4. ✅ **Recommendations** - Actionable strategic recommendations
   5. 📎 **Citations** - Credible sources supporting the analysis
 - **Built-in Caching**: Avoid repeated API costs via SQLite
+- **Web Search Integration**: Tavily for real-time source coverage
 - **A/B Testing**: External prompt files for testing different approaches
 - **Clipboard + Markdown Export**: Share reports in Notion, Slack, or email
 - **Cost Control**: Session-based rate limiting and cache management
@@ -32,9 +33,10 @@ Powered by Groq's `compound-beta` model and enhanced with cost-saving caching an
 | Layer | Technology | Purpose |
 |-------|------------|---------|
 | **Frontend** | Streamlit | Rapid UI development with Python |
-| **LLM Backend** | Groq `compound-beta` | Fast, reliable text generation |
+| **Primary LLM** | DeepSeek `deepseek-reasoner` | Advanced reasoning and research |
+| **Fallback LLM** | Groq `compound-beta` | Fast, reliable text generation |
 | **Caching** | SQLite3 | Hash-based local cache to reduce API costs |
-| **Search API** | Tavily (optional) | Web search for additional sources |
+| **Search API** | Tavily | Web search for enhanced research |
 | **Secrets** | `.env` / `.streamlit/secrets.toml` | Secure API key management |
 
 ---
@@ -44,7 +46,7 @@ Powered by Groq's `compound-beta` model and enhanced with cost-saving caching an
 ```
 pmm-research-agent/
 ├── app.py                    # Streamlit app UI
-├── deep_research.py          # Basic research (Groq + SQLite)
+├── deep_research.py          # Basic research (DeepSeek + Groq + SQLite)
 ├── advanced_research.py      # 3-stage research pipeline
 ├── prompt_manager.py         # A/B testing for prompts
 ├── testprompt1              # Comprehensive PMM research prompt
@@ -81,7 +83,7 @@ pip install -r requirements.txt
 
 ```bash
 cp env.example .env
-# Edit .env and add your Groq API key
+# Edit .env and add your DeepSeek API key (and Groq as fallback)
 ```
 
 #### Option B: Streamlit Secrets
@@ -89,8 +91,9 @@ cp env.example .env
 Edit `.streamlit/secrets.toml`:
 
 ```toml
-GROQ_API_KEY = "your-groq-api-key-here"
-TAVILY_API_KEY = "your-tavily-api-key-here"  # optional
+DEEPSEEK_API_KEY = "your-deepseek-api-key-here"  # primary backend
+GROQ_API_KEY = "your-groq-api-key-here"          # fallback backend
+TAVILY_API_KEY = "your-tavily-api-key-here"      # required for web search
 research_mode = "aggressive"
 ```
 
@@ -206,8 +209,9 @@ Modify this in `deep_research.py` if needed.
 - **Clear Cache**: One-click cache reset
 
 ### API Keys
-- **Groq**: Required for LLM functionality
-- **Tavily**: Optional for web search enhancement
+- **DeepSeek**: Required for primary LLM functionality
+- **Groq**: Required for fallback LLM functionality
+- **Tavily**: Required for web search enhancement
 
 ---
 
@@ -296,3 +300,27 @@ Use freely. Fork, remix, and deploy as your own internal research agent.
 *Built with ❤️ for Product Marketing Managers everywhere* 
 
 *Contributions and suggestions welcome!* 
+
+## 🗺️ Architecture Overview
+
+```mermaid
+flowchart TD
+    A[User Query]
+    A -- Basic Mode --> B[deep_research.py]
+    A -- Advanced Mode --> C[advanced_research.py]
+    B -- Prompt (testprompt1/2) --> D[LLM Backend Selector]
+    C -- Stage 1-3 Prompts (testprompt3) --> D
+    D -- Primary --> E[DeepSeek Reasoner]
+    D -- Fallback --> F[Groq compound-beta]
+    E -- LLM Response --> G[Structured Report]
+    F -- LLM Response --> G
+    G --> H[Cache/Return to User]
+    style E fill:#e0f7fa,stroke:#00796b
+    style F fill:#f3e5f5,stroke:#6a1b9a
+    style D fill:#fffde7,stroke:#fbc02d
+```
+
+- **DeepSeek Reasoner** is the primary backend for all research queries.
+- **Groq compound-beta** is used as a fallback if DeepSeek is unavailable or rate-limited.
+- Prompts are always loaded from external files for both basic and advanced modes.
+- Caching ensures cost control and fast repeat queries. 
