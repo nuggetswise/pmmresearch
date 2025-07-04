@@ -1,0 +1,184 @@
+Here’s a clean, production-ready **`README.md`** file for your **PMM Research Agent** project, based on everything you’ve built so far:
+
+---
+
+```markdown
+# 🧠 PMM Research Agent
+
+A focused, lightning-fast research assistant built for Product Marketing Managers (PMMs) and GTM leaders.
+
+Ask any strategic question — get a structured, multi-part answer synthesized by a Groq-powered LLM in seconds.
+
+Powered by Groq’s `compound-beta` model and enhanced with cost-saving caching and clean markdown outputs.
+
+---
+
+## 🚀 Features
+
+- **Zero UI Friction**: One question in → instant research report out
+- **Structured Answers**: Always outputs:
+  1. 🔍 Trends  
+  2. 🏁 Competitor Examples  
+  3. ⚔️ Conflicting Insights  
+  4. ✅ Recommendations  
+  5. 📎 Citations
+- **Built-in Caching**: Avoid repeated API costs via SQLite
+- **Optional Fallback Search**: Plug in Tavily for added source coverage
+- **Clipboard + Markdown Export**: Share reports in Notion, Slack, or email
+
+---
+
+## 🛠 Stack
+
+| Layer       | Tech                              |
+|------------|-----------------------------------|
+| Frontend    | Streamlit                         |
+| LLM Backend | Groq `compound-beta`              |
+| Caching     | SQLite3 (hash-based local cache)  |
+| Search API  | Tavily (optional)                 |
+| Secrets     | `.env` / `.streamlit/secrets.toml` |
+
+---
+
+## 📁 Project Structure
+
+```
+
+pmm-research-agent/
+├── app.py                    # Streamlit app UI
+├── deep\_research.py         # Groq + SQLite logic
+├── requirements.txt         # Dependencies
+├── .env.example             # GROQ\_API\_KEY, TAVILY\_API\_KEY
+└── .streamlit/secrets.toml  # For local use
+
+````
+
+---
+
+## 💻 Getting Started
+
+### 1. Clone the repo
+```bash
+git clone https://github.com/yourname/pmm-research-agent.git
+cd pmm-research-agent
+````
+
+### 2. Install dependencies
+
+```bash
+pip install -r requirements.txt
+```
+
+### 3. Set up API keys
+
+#### Option A: Use `.env` file
+
+```bash
+cp .env.example .env
+# Then fill in your Groq key
+```
+
+#### Option B: Use Streamlit secrets
+
+`.streamlit/secrets.toml`:
+
+```toml
+GROQ_API_KEY = "your-groq-key-here"
+TAVILY_API_KEY = "your-tavily-key-here"  # optional
+research_mode = "aggressive"
+```
+
+### 4. Run the app
+
+```bash
+streamlit run app.py
+```
+
+---
+
+## 🧪 Example Prompt
+
+```
+"Compare ClickUp and Asana’s onboarding for technical users"
+```
+
+Produces a markdown report with:
+
+* Key trends in user onboarding
+* Concrete examples from both tools
+* Conflicting approaches
+* Strategic PMM takeaways
+* Cited sources (G2, blogs, docs, etc.)
+
+---
+
+## 🧠 Prompt Engineering
+
+The agent is guided by a hardcoded system prompt:
+
+```
+You are a Principal PMM Strategist. Always output:
+1) Trends, 2) Competitor Examples, 3) Conflicts, 4) Recommendations, 5) Citations.
+```
+
+Modify this in `deep_research.py` if needed.
+
+---
+
+## 💸 Cost Control Features
+
+* ✅ Local SQLite cache to avoid duplicate Groq calls
+* ✅ Session-based rate limiting (5 queries/session recommended)
+* ✅ Optional fallback to cheaper models for trivial queries
+* ✅ Tavily fallback for web search when Groq response is thin
+
+---
+
+## ✅ Future Enhancements (Optional)
+
+* Save reports as GitHub Gists
+* Add `examples/` directory with query templates
+* Slack/Notion export integrations
+* Multi-user session support with auth + quotas
+
+---
+
+## 📝 License
+
+MIT. Use freely. Fork, remix, and deploy as your own internal research agent.
+
+---
+
+## 🔗 Acknowledgments
+
+* [Groq](https://groq.com) — blazing-fast LLM execution
+* [DeepSeek Reasoner](https://api-docs.deepseek.com/)
+* [Tavily](https://tavily.com) — search API
+* [Streamlit](https://streamlit.io) — fast Python UIs
+
+```
+How to use Groq compound: 
+
+from groq import Groq
+
+client = Groq()
+completion = client.chat.completions.create(
+    model="compound-beta",
+    messages=[
+      {
+        "role": "user",
+        "content": ""
+      }
+    ],
+    temperature=1,
+    max_completion_tokens=1024,
+    top_p=1,
+    stream=True,
+    stop=None,
+)
+
+for chunk in completion:
+    print(chunk.choices[0].delta.content or "", end="")
+
+
+```
