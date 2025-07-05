@@ -155,8 +155,8 @@ def main():
                         # Use advanced 3-stage research pipeline
                         result = asyncio.run(advanced_researcher.conduct_advanced_research(user_query, selected_prompt))
                     elif selected_prompt == "testprompt4":
-                        # Use data-driven research (executive reports)
-                        result = asyncio.run(advanced_researcher.conduct_advanced_research(user_query, selected_prompt))
+                        # Use data-driven research (executive reports) - handled by basic research agent
+                        result = research_agent.generate_research_report(user_query, selected_prompt)
                     else:
                         # Use basic research (Groq/DeepSeek only)
                         result = research_agent.generate_research_report(user_query, selected_prompt)
