@@ -85,7 +85,7 @@ class AdvancedPMMResearcher:
                         {"role": "user", "content": user_prompt}
                     ],
                     temperature=0.7,
-                    max_tokens=2000,
+                    # Let LLM decide appropriate length
                     stream=False
                 )
                 
@@ -205,7 +205,7 @@ class AdvancedPMMResearcher:
                         {"role": "user", "content": user_prompt}
                     ],
                     temperature=0.7,
-                    max_tokens=2000,
+                    # Let LLM decide appropriate length
                     stream=False
                 )
                 

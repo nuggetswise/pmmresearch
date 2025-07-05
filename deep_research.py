@@ -212,7 +212,7 @@ Provide a comprehensive PMM-focused analysis with the exact structure specified 
                         {"role": "user", "content": user_prompt}
                     ],
                     temperature=0.7,
-                    max_tokens=4000,  # Higher limit for DeepSeek
+                    # Let LLM decide appropriate length
                     stream=False
                 )
                 
@@ -370,7 +370,7 @@ Provide a comprehensive PMM-focused analysis with the exact structure specified 
                         {"role": "user", "content": full_prompt}
                     ],
                     temperature=0.7,
-                    max_tokens=4000,
+                    # Let LLM decide appropriate length
                     stream=False
                 )
                 
